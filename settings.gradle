@@ -1,1 +1,1 @@
-include ':GeoQuiz'
+include ':GeoQuiz', ':CriminalIntent'

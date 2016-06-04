@@ -50,7 +50,7 @@ public class CheatActivity extends AppCompatActivity {
 
                 /*
                  * API级别过滤非常有用，可以让我们知道应用要用到的类在哪个API级别可用。
-                 * 
+                 *
                  * 如想查看ViewAnimationUtils类的哪些方法可用于API
                  * 16级，可按API级别过滤引用。在页面左边按包索引的类列表上方，找到API级别过滤框，目前它显示为API level:
                  * 21。展开下拉表单，选择数字16。一般而言，所有API
