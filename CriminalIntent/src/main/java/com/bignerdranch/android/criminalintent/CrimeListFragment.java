@@ -25,6 +25,20 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    /**
+     * 第10章 挑战练习：实现高效的RecyclerView刷新
+     *
+     * 该实现方式参考作者cstewart论坛的回复：Challenge Solution - having trouble
+     * https://forums.bignerdranch.com/t/challenge-solution-having-trouble/7666/4
+     *
+     * 在后台被回收（设备旋转模拟这种情况）变为初始值-1，
+     * 不需要使用onSaveInstanceState()保存起来的原因：
+     * Now that I think about it, I guess you don't have to save the current index to the activity record.
+     * If the activity is destroyed and has to be recreated,
+     * then it has to reload/redraw the whole list anyway,
+     * so there's no real need to save the index of the item that was edited.
+     */
+    private int mLastAdapterClickPosition = -1;
 
     @Nullable
     @Override
@@ -59,7 +73,12 @@ public class CrimeListFragment extends Fragment {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-            mAdapter.notifyDataSetChanged();
+            if (mLastAdapterClickPosition < 0) {
+                mAdapter.notifyDataSetChanged();
+            } else {
+                mAdapter.notifyItemChanged(mLastAdapterClickPosition);
+                mLastAdapterClickPosition = -1;
+            }
         }
     }
 
@@ -88,6 +107,7 @@ public class CrimeListFragment extends Fragment {
 
         @Override
         public void onClick(View v) {
+            mLastAdapterClickPosition = getAdapterPosition();
             Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getId());
             startActivityForResult(intent, REQUEST_CRIME);
         }
