@@ -28,20 +28,26 @@
         style="?android:listSeparatorTextViewStyle"
         />
 
-    <Button
-        android:id="@+id/crime_date"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        />
+        >
+        <Button
+            android:id="@+id/crime_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            />
+        <CheckBox
+            android:id="@+id/crime_solved"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/crime_solved_label"
+            />
+    </LinearLayout>
 
-    <CheckBox
-        android:id="@+id/crime_solved"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:text="@string/crime_solved_label"
-        />
 </LinearLayout>
