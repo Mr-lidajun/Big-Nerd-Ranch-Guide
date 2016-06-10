@@ -89,6 +89,21 @@ public class CheatActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Question about newIntent method
+     * Could someone please give me a little clarification on why creating the newIntent method is a better approach?
+     * I'm not sure I recognize the benefit of this compared to the way it was before.
+     *
+     * Answer：cstewart(作者之一)
+     * There is no compile-time verification that I'm passing in the right parameters.
+     * You'll only discover a problem when you run the app.
+     *
+     * 参考：https://forums.bignerdranch.com/t/question-about-newintent-method/7678
+     *
+     * @param packageContext
+     * @param answerIsTrue
+     * @return
+     */
     public static Intent newIntent(Context packageContext, boolean answerIsTrue) {
         Intent i = new Intent(packageContext, CheatActivity.class);
         i.putExtra(EXTRA_ANSWER_IS_TRUE, answerIsTrue);

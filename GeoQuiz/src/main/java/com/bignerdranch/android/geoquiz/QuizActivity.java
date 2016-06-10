@@ -38,7 +38,8 @@ public class QuizActivity extends AppCompatActivity {
     private int mCurrentIndex = 0;
 
     /**
-     * 参考论坛 https://forums.bignerdranch.com/t/my-solution-to-challenge-3/8692
+     * 参考论坛 My solution to challenge 3
+     * https://forums.bignerdranch.com/t/my-solution-to-challenge-3/8692
      * This is a list array of integers where all cheated question's index will be stored
      */
     private ArrayList<Integer> mCheatedQuestions = new ArrayList<>();
