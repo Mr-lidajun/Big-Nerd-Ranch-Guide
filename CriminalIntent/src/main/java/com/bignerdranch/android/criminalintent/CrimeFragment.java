@@ -19,7 +19,7 @@ import java.util.UUID;
  * @author lidajun
  * @email solidajun@gmail.com
  * @date 16/6/3 21:58.
- * @desc: CrimeFragment
+ * @desc: Crime详情页
  */
 public class CrimeFragment extends Fragment {
     private static final String TAG = "CrimeFragment";
