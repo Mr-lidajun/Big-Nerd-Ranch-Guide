@@ -25,7 +25,9 @@ import java.util.UUID;
  * @date 16/6/3 21:58.
  * @desc: Crime详情页
  *
- * 挑战练习：按设备类型展现
+ * 12.5 挑战练习：按设备类型展现
+ * 参考：My Solution to This Chapter (Buggy)
+ * https://forums.bignerdranch.com/t/my-solution-to-this-chapter-buggy/7935
  *        初步分析需三大步骤。第一步，替换掉onCreateDialog方法，改用onCreateView方法来创建DatePickerFragment的视图
  *        。以这种方式创建DialogFragment的话，对话框界面上看不到title区域，同样没有放置按钮的空间。
  *        这需要我们自行在dialog_date.xml布局中创建OK按钮。
