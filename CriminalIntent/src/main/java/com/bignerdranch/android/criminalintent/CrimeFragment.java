@@ -2,6 +2,7 @@ package com.bignerdranch.android.criminalintent;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -23,16 +24,32 @@ import java.util.UUID;
  * @email solidajun@gmail.com
  * @date 16/6/3 21:58.
  * @desc: Crime详情页
+ *
+ * 挑战练习：按设备类型展现
+ *        初步分析需三大步骤。第一步，替换掉onCreateDialog方法，改用onCreateView方法来创建DatePickerFragment的视图
+ *        。以这种方式创建DialogFragment的话，对话框界面上看不到title区域，同样没有放置按钮的空间。
+ *        这需要我们自行在dialog_date.xml布局中创建OK按钮。
+ *        有了DatePickerFragment视图，接下来就能以对话框或以在activity中内嵌的方式展现
+ *        。第二步，我们创建SingleFragmentActivity子类。它的任务就是托管DatePickerFragment。
+ *        选择这种方式展现DatePickerFragment
+ *        ，就要使用startActivityForResult机制回传日期给CrimeFragment
+ *        。在DatePickerFragment中，如果目标fragment不存在，就调用托管activity的setResult(int,
+ *        intent)方法回传日期给CrimeFragment。
+ *        最后，修改CriminalIntent应用：如果是手机设备，就以全屏activity的方式展现DatePickerFragment
+ *        ；如果是平板设备，就以对话框的方式展现DatePickerFragment。想知道如何按设备屏幕大小优化应用，请提前学习第17章的相关内容。
  */
 public class CrimeFragment extends Fragment {
     private static final String TAG = "CrimeFragment";
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
+    private static final String DIALOG_TIME = "DialogTime";
     private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
 
     private Crime mCrime;
     private EditText mTitleField;
     private Button mDateButton;
+    private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
 
     public static CrimeFragment newInstance(UUID crimeId) {
@@ -80,10 +97,57 @@ public class CrimeFragment extends Fragment {
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentManager manager = getFragmentManager();
-                DatePickerFragment dialog = DatePickerFragment.newInstance(mCrime.getDate());
-                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
-                dialog.show(manager, DIALOG_DATE);
+                /*
+                 * 横屏，模拟平板设备，以对话框的方式展现DatePickerFragment
+                 */
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    /*
+                     * why not getSupportFragmentManager()?
+                     * cstewart（作者）答：
+                     *
+                     * I know the API is confusing, but you're still using support
+                     * fragments here. Support fragments don't have a
+                     * "getSupportFragmentManager()" method. The
+                     * "getFragmentManager()" method from within a support fragment
+                     * returns the support library version of the fragment manager.
+                     *
+                     * Here are the docs for that method:
+                     * https://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager()
+                     */
+                    FragmentManager manager = getFragmentManager();
+                    DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
+                    dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+                    dateDialog.show(manager, DIALOG_DATE);
+                } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    /*
+                     *  竖屏，模拟手机设备，以全屏activity的方式展现DatePickerFragment
+                     */
+                    Intent intent = DatePickerActivity.newInstance(getActivity(), mCrime.getDate());
+                    startActivityForResult(intent, REQUEST_DATE);
+                }
+            }
+        });
+
+        mTimeButton = (Button) v.findViewById(R.id.crime_time);
+        updateTime();
+        mTimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    /*
+                     * 横屏，模拟平板设备，以对话框的方式展现DatePickerFragment
+                     */
+                    FragmentManager manager = getFragmentManager();
+                    TimePickerFragment timeDialog = TimePickerFragment.newInstance(mCrime.getDate());
+                    timeDialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+                    timeDialog.show(manager, DIALOG_TIME);
+                } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    /*
+                     * 竖屏，模拟手机设备，以全屏activity的方式展现DatePickerFragment
+                     */
+                    Intent intent = TimePickerActivity.newInstance(getActivity(), mCrime.getDate());
+                    startActivityForResult(intent, REQUEST_TIME);
+                }
             }
         });
 
@@ -114,10 +178,18 @@ public class CrimeFragment extends Fragment {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
             updateDate();
+        } else if (requestCode == REQUEST_TIME) {
+            Date date = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_DATE);
+            mCrime.setDate(date);
+            updateTime();
         }
     }
 
     private void updateDate() {
-        mDateButton.setText(mCrime.getDate().toString());
+        mDateButton.setText(mCrime.getFormattedDate());
+    }
+
+    private void updateTime() {
+        mTimeButton.setText(mCrime.getFormattedTime());
     }
 }

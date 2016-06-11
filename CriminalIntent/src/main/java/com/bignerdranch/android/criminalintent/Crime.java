@@ -1,6 +1,8 @@
 package com.bignerdranch.android.criminalintent;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -48,5 +50,17 @@ public class Crime {
 
     public void setSolved(boolean solved) {
         mSolved = solved;
+    }
+
+    public String getFormattedDate() {
+        String format = "EEEE, MMM d, yyyy";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.CHINA);
+        return simpleDateFormat.format(mDate);
+    }
+
+    public String getFormattedTime() {
+        String format = "HH:mm";
+        SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.CHINA);
+        return sdf.format(mDate);
     }
 }
