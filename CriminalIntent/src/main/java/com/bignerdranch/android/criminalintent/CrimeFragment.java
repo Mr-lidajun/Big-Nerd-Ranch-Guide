@@ -139,14 +139,14 @@ public class CrimeFragment extends Fragment {
                      */
                     FragmentManager manager = getFragmentManager();
                     TimePickerFragment timeDialog = TimePickerFragment.newInstance(mCrime.getDate());
-                    timeDialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+                    timeDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
                     timeDialog.show(manager, DIALOG_TIME);
                 } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                     /*
                      * 竖屏，模拟手机设备，以全屏activity的方式展现DatePickerFragment
                      */
                     Intent intent = TimePickerActivity.newInstance(getActivity(), mCrime.getDate());
-                    startActivityForResult(intent, REQUEST_TIME);
+                    startActivityForResult(intent, REQUEST_DATE);
                 }
             }
         });
@@ -173,14 +173,11 @@ public class CrimeFragment extends Fragment {
         if (resultCode != Activity.RESULT_OK) {
             return;
         }
-        
+
         if (requestCode == REQUEST_DATE) {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
             updateDate();
-        } else if (requestCode == REQUEST_TIME) {
-            Date date = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_DATE);
-            mCrime.setDate(date);
             updateTime();
         }
     }

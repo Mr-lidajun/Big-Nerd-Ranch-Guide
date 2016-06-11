@@ -55,21 +55,6 @@ public class DatePickerFragment extends PickerFragment {
     }
 
     @Override
-    protected View getDialogView() {
-        return LayoutInflater.from(getActivity()).inflate(R.layout.dialog_date, null);
-    }
-
-    @Override
-    protected int getDialogPickerId() {
-        return R.id.dialog_date_date_picker;
-    }
-
-    @Override
-    protected int getPickerTitle() {
-        return R.string.date_picker_title;
-    }
-
-    @Override
     protected void setDate(Calendar calendar, View view, int pickerId) {
         int year = calendar.get(Calendar.YEAR);
         int month = calendar.get(Calendar.MONTH);

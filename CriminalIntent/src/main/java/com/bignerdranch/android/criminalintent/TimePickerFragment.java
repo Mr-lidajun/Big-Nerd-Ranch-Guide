@@ -54,21 +54,6 @@ public class TimePickerFragment extends PickerFragment {
     }
 
     @Override
-    protected View getDialogView() {
-        return LayoutInflater.from(getActivity()).inflate(R.layout.dialog_time, null);
-    }
-
-    @Override
-    protected int getDialogPickerId() {
-        return R.id.dialog_time_time_picker;
-    }
-
-    @Override
-    protected int getPickerTitle() {
-        return R.string.time_picker_title;
-    }
-
-    @Override
     protected void setDate(Calendar calendar, View view, int pickerId) {
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
