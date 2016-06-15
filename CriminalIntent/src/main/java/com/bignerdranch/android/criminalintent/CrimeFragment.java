@@ -54,18 +54,42 @@ public class CrimeFragment extends Fragment {
     private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
 
+    /**
+     * 托管activity需要fragment实例时，转而调用newsInstance()方法，而非直接调用其构造方法。
+     * 而且，为满足fragment创建argument的要求，activity可传入任何需要的参数给newInstance()方法。
+     * @param crimeId
+     * @return
+     */
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
 
+        /*
+         * 深入学习: 为何要用fragment argument?
+         * fragment argument的使用还是有点复杂。为什么不直接在CrimeFragment里创建一个实例变量呢？
+         *
+         * 创建实例变量的方式并不可靠。因为，在操作系统重建fragment时，设备配置发生改变时，用户暂时离开当前应用时，甚至操作系统按需回收内存时，
+         * 任何实例变量都不复存在了。尤其是内存不够，操作系统强制杀掉应用的情况，可以说是无人能挡。
+         *
+         * 因此，可以说，fragment argument就是为应对上述场景而生。
+         *
+         * 我们还有另一个方法应对上述场景，那就是使用实例状态保存机制。具体来说，就是将crime ID赋值给实例变量，然后在onSaveInstanceState(Bundle)方法保存下来。
+         * 要用时，从onCreate(Bundle)方法中的Bundle中取回
+         *
+         * 然而，这种解决方案维护成本高。举例来说，若干年后，你要修改fragment代码添加其他argument，很可能会忘记在onSaveInstanceState(Bundle)方法里保存新增argument。
+         *
+         * Android开发者更喜欢fragment argument这个解决方案，因为这种方式很清楚直白。若干年后，再回头修改老代码时，只需一眼就能知道，crime ID是以argument保存和传递使用的。
+         * 即使要新增argument，也会记得使用argument bundle保存它。
+         */
         CrimeFragment fragment = new CrimeFragment();
-        fragment.setArguments(args);
+        fragment.setArguments(args);// 附加argument给fragment
         return fragment;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 从argument中获取crime ID
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
     }
