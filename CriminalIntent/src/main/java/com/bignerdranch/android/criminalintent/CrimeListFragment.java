@@ -4,9 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -21,10 +25,14 @@ import java.util.List;
  */
 public class CrimeListFragment extends Fragment {
     private static final String TAG = "CrimeListFragment";
+    private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
     private static final int REQUEST_CRIME = 1;
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    // 记录子标题状态
+    private boolean mSubtitleVisible;
+
     /**
      * 第10章 挑战练习：实现高效的RecyclerView刷新
      *
@@ -39,6 +47,12 @@ public class CrimeListFragment extends Fragment {
      * so there's no real need to save the index of the item that was edited.
      */
     private int mLastAdapterClickPosition = -1;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);// 通知FragmentManager，CrimeListFragment需接收选项菜单方法回调
+    }
 
     @Nullable
     @Override
@@ -55,14 +69,76 @@ public class CrimeListFragment extends Fragment {
          */
          mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        if (savedInstanceState != null) {
+            mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
+        }
+
         updateUI();
 
         return view;
     }
 
-    @Override public void onResume() {
+    @Override
+    public void onResume() {
         super.onResume();
         updateUI();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible);// 保存子标题状态值（设备旋转问题）
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_crime_list, menu);
+
+        // 更新菜单项
+        MenuItem subtitleItem = menu.findItem(R.id.menu_item_show_subtitle);
+        if (mSubtitleVisible) {
+            subtitleItem.setTitle(R.string.hide_subtitle);
+        } else {
+            subtitleItem.setTitle(R.string.show_subtitle);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_new_crime:
+                Crime crime = new Crime();
+                CrimeLab.get(getActivity()).addCrime(crime);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
+                startActivity(intent);
+                return true;
+            case R.id.menu_item_show_subtitle:
+                mSubtitleVisible = !mSubtitleVisible;
+                getActivity().invalidateOptionsMenu();// 更新子标题，同时创建菜单项
+                updateSubtitle();
+                return true;
+            default:
+                super.onOptionsItemSelected(item);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * 设置工具栏子标题
+     */
+    private void updateSubtitle() {
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        int crimeCount = crimeLab.getCrimes().size();
+        String subtitle = getString(R.string.subtitle_format, crimeCount);
+
+        // 根据mSubtitleVisible变量值，联动菜单项标题与子标题
+        if (!mSubtitleVisible) {
+            subtitle = null;
+        }
+
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
     private void updateUI() {
@@ -80,6 +156,12 @@ public class CrimeListFragment extends Fragment {
                 mLastAdapterClickPosition = -1;
             }
         }
+
+        /*
+         * 显示最新状态（onResume）
+         * 解决问题一：新建crime记录后，使用回退按钮回到CrimeListActivity界面，子标题显示的总记录数不会更新
+         */
+        updateSubtitle();
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {

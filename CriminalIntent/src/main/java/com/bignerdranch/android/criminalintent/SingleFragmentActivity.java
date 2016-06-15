@@ -2,8 +2,8 @@ package com.bignerdranch.android.criminalintent;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
 
 /**
  * @author lidajun
@@ -11,7 +11,7 @@ import android.support.v4.app.FragmentManager;
  * @date 16/6/5 12:22.
  * @desc: 抽象Activity类
  */
-public abstract class SingleFragmentActivity extends FragmentActivity {
+public abstract class SingleFragmentActivity extends AppCompatActivity {
     private static final String TAG = "SingleFragmentActivity";
 
     protected abstract Fragment createFragment();
