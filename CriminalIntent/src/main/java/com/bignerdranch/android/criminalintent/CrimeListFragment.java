@@ -27,6 +27,7 @@ public class CrimeListFragment extends Fragment {
     private static final String TAG = "CrimeListFragment";
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
     private static final int REQUEST_CRIME = 1;
+    private static final String ARG_SUBTITLE_VISIBLE = "arg_subtitle_visible";
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
@@ -48,6 +49,21 @@ public class CrimeListFragment extends Fragment {
      */
     private int mLastAdapterClickPosition = -1;
 
+    /**
+     * 托管activity需要fragment实例时，转而调用newsInstance()方法，而非直接调用其构造方法。
+     * 而且，为满足fragment创建argument的要求，activity可传入任何需要的参数给newInstance()方法。
+     * @param subtitleVisible
+     * @return
+     */
+    public static Fragment newIntent(boolean subtitleVisible) {
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_SUBTITLE_VISIBLE, subtitleVisible);
+
+        CrimeListFragment fragment = new CrimeListFragment();
+        fragment.setArguments(args);// 附加argument给fragment
+        return fragment;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +84,11 @@ public class CrimeListFragment extends Fragment {
          * E/RecyclerView: No layout manager attached; skipping layout
          */
          mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        /*
+         * 从argument中获取subtitle Visible
+         */
+        mSubtitleVisible = getArguments().getBoolean(ARG_SUBTITLE_VISIBLE);
 
         if (savedInstanceState != null) {
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
@@ -110,7 +131,7 @@ public class CrimeListFragment extends Fragment {
             case R.id.menu_item_new_crime:
                 Crime crime = new Crime();
                 CrimeLab.get(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId(), mSubtitleVisible);
                 startActivity(intent);
                 return true;
             case R.id.menu_item_show_subtitle:
@@ -190,7 +211,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onClick(View v) {
             mLastAdapterClickPosition = getAdapterPosition();
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
+            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId(), mSubtitleVisible);
             startActivityForResult(intent, REQUEST_CRIME);
         }
     }
