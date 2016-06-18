@@ -26,6 +26,19 @@ public class CrimePagerActivity extends AppCompatActivity {
         return intent;
     }
 
+    /**
+     * 实现层级导航带来的问题：
+     * 导航回退到的目标activity会被完全重建。既然父activity是全新的activity，实例变量值以及保存的实例状态显然会彻底丢失。
+     *
+     * 方案二：
+     * 启动CrimePagerActivity时，把子标题状态作为extra信息传给它。然后，在CrimePagerActivity中覆盖getParentActivityIntent()方法，
+     * 用附带了extra信息的intent重建CrimeListActivity。这需要CrimePagerActivity类知道父类工作机制的细节。
+     *
+     * 参考：
+     * Question about the Up button and the loss of state
+     * https://forums.bignerdranch.com/t/question-about-the-up-button-and-the-loss-of-state/7714
+     * @return
+     */
     @Nullable
     @Override
     public Intent getParentActivityIntent() {
