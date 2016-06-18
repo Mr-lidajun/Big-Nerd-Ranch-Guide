@@ -1,5 +1,6 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -48,6 +49,8 @@ public class CrimeListFragment extends Fragment {
      * so there's no real need to save the index of the item that was edited.
      */
     private int mLastAdapterClickPosition = -1;
+
+    private boolean mIsDeleteCrime;
 
     /**
      * 托管activity需要fragment实例时，转而调用newsInstance()方法，而非直接调用其构造方法。
@@ -140,9 +143,8 @@ public class CrimeListFragment extends Fragment {
                 updateSubtitle();
                 return true;
             default:
-                super.onOptionsItemSelected(item);
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -172,6 +174,9 @@ public class CrimeListFragment extends Fragment {
         } else {
             if (mLastAdapterClickPosition < 0) {
                 mAdapter.notifyDataSetChanged();
+            } else if (mIsDeleteCrime) {
+                mAdapter.notifyItemRemoved(mLastAdapterClickPosition);
+                mLastAdapterClickPosition = -1;
             } else {
                 mAdapter.notifyItemChanged(mLastAdapterClickPosition);
                 mLastAdapterClickPosition = -1;
@@ -219,7 +224,9 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CRIME) {
-            // Handle result
+            if (resultCode == Activity.RESULT_OK) {
+                mIsDeleteCrime  = data.getBooleanExtra(CrimeFragment.EXTRA_DELETE_CRIME, false);
+            }
         }
     }
 
