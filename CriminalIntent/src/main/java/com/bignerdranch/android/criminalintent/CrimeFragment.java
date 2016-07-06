@@ -11,6 +11,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -71,6 +72,10 @@ public class CrimeFragment extends Fragment {
      * 选择联系人
      */
     private Button mSuspectButton;
+    /**
+     * 拨打嫌疑人电话
+     */
+    private Button mCallSuspectButton;
 
     /**
      * 托管activity需要fragment实例时，转而调用newsInstance()方法，而非直接调用其构造方法。
@@ -216,12 +221,21 @@ public class CrimeFragment extends Fragment {
         mReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*
                 Intent i = new Intent(Intent.ACTION_SEND);
                 i.setType("text/plain");
                 i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
                 i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
                 // 使用选择器（每次都显示activity选择器）
                 i = Intent.createChooser(i, getString(R.string.send_report));
+                */
+
+                // 通过ShareCompat.IntentBuilder来创建Intent
+                Intent i = ShareCompat.IntentBuilder.from(getActivity())
+                        .setText(getCrimeReport())
+                        .setSubject(getString(R.string.crime_report_subject))
+                        .setType("text/plain")
+                        .getIntent();
                 startActivity(i);
             }
         });
@@ -233,6 +247,38 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
+
+        /*
+         * Challenge: Call a suspect
+         * https://forums.bignerdranch.com/t/challenge-call-a-suspect/7828
+         */
+        mCallSuspectButton = (Button) v.findViewById(R.id.call_suspect);
+        mCallSuspectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri contentUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+                String selectClause = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
+                String[] fields = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                String[] selectParams = {Long.toString(mCrime.getContactId())};
+
+                Cursor cursor = getActivity().getContentResolver()
+                        .query(contentUri, fields, selectClause, selectParams, null);
+                if (cursor != null) {
+                    try {
+                        if (cursor.getCount() == 0) {
+                            return;
+                        }
+                        cursor.moveToFirst();
+                        String number = cursor.getString(0);
+                        Uri phoneNumber = Uri.parse("tel:" + number);
+                        Intent i = new Intent(Intent.ACTION_DIAL, phoneNumber);
+                        startActivity(i);
+                    } finally {
+                        cursor.close();
+                    }
+                }
             }
         });
 
@@ -289,7 +335,7 @@ public class CrimeFragment extends Fragment {
             // Specify which fields you want your query to return
             // values for.
             String[] queryFields = new String[]{
-                    ContactsContract.Contacts.DISPLAY_NAME
+                    ContactsContract.Contacts.DISPLAY_NAME, ContactsContract.Contacts._ID
             };
 
             // Perform your query - the contactUri is like a "where"
@@ -307,8 +353,13 @@ public class CrimeFragment extends Fragment {
                 // that is your suspect's name;
                 c.moveToFirst();
                 String suspect = c.getString(0);
+                long contactId = c.getLong(1);
                 mCrime.setSuspect(suspect);
+                mCrime.setContactId(contactId);
                 mSuspectButton.setText(suspect);
+
+                //enables the button and changes its text
+                //updateCallSuspectButton();
             } finally {
                 c.close();
             }
@@ -321,6 +372,10 @@ public class CrimeFragment extends Fragment {
 
     private void updateTime() {
         mTimeButton.setText(mCrime.getFormattedTime());
+    }
+
+    private void updateCallSuspectButton() {
+        mCallSuspectButton.setClickable(true);
     }
 
     private void setResult() {

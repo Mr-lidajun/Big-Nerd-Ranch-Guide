@@ -22,6 +22,11 @@ public class Crime {
      */
     private String mSuspect;
 
+    /**
+     * 嫌疑人联系方式ID
+     */
+    private long mContactId;
+
     public Crime() {
         // Generate unique identifier
         this(UUID.randomUUID());
@@ -66,6 +71,14 @@ public class Crime {
 
     public void setSuspect(String suspect) {
         mSuspect = suspect;
+    }
+
+    public long getContactId() {
+        return mContactId;
+    }
+
+    public void setContactId(long contactId) {
+        mContactId = contactId;
     }
 
     public String getFormattedDate() {
