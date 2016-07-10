@@ -16,7 +16,7 @@ import android.widget.ImageView;
  * @author lidajun
  * @email solidajun@gmail.com
  * @date 16/7/10 17:08.
- * @desc: ${todo}
+ * @desc: 查看缩放版本的陋习现场图片
  */
 public class SuspectImageFragment extends DialogFragment {
     private static final String TAG = "SuspectImageFragment";

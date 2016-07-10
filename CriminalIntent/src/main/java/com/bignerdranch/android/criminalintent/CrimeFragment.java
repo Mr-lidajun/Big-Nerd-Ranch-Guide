@@ -1,5 +1,7 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.os.Build;
+import android.view.ViewTreeObserver;
 import java.io.File;
 import java.util.Date;
 import java.util.UUID;
@@ -334,7 +336,21 @@ public class CrimeFragment extends Fragment {
                 }
             }
         });
-        updatePhotoView();
+
+        /*
+         * 通过ViewTreeObserver可以从Activity层级结构中获取任何视图
+         * 使用OnGlobalLayoutListener可以监听任何布局的传递，控制事件的发生
+         * 使用有效的mPhotoView尺寸，等到有布局切换时再调用updatePhotoView()方法
+         */
+        mPhotoView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                updatePhotoView();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    mPhotoView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            }
+        });
 
         return v;
     }
@@ -456,11 +472,14 @@ public class CrimeFragment extends Fragment {
     }
 
     /**
-     * 更新mPhotoView
+     * 更新PhotoView
+     * The first time the updatePhotoView() method being called, it was just called by the onGlobalLayout() method.
+     * There was no need to use the getScaledBitmap(String, Activity)method.
      */
     private void updatePhotoView() {
         if (mPhotoFile == null || !mPhotoFile.exists()) {
             mPhotoView.setImageDrawable(null);
+            mPhotoView.setClickable(false);
         } else {
             //Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), getActivity());
             //Bitmap bitmap = PictureUtils.scaleDownAndRotatePic(mPhotoFile.getPath());
@@ -468,9 +487,11 @@ public class CrimeFragment extends Fragment {
             //getActivity().getWindowManager().getDefaultDisplay().getSize(size);// 获取屏幕尺寸
             //Bitmap bitmap = PictureUtils.decodeSampledBitmapFromResource(mPhotoFile.getPath(), size.x, size.y);
             //Log.d(TAG, "bitmap size=" + bitmap.getByteCount() + ", size.x=" + size.x + ", size.y=" + size.y);
-            Bitmap bitmap = PictureUtils.decodeSampledBitmapFromFile(mPhotoFile.getPath(), 240, 240);
+            Bitmap bitmap = PictureUtils.decodeSampledBitmapFromFile(mPhotoFile.getPath(), mPhotoView.getWidth(),
+                    mPhotoView.getHeight());
             Log.d(TAG, "bitmap size=" + bitmap.getByteCount());
             mPhotoView.setImageBitmap(bitmap);
+            mPhotoView.setClickable(true);
         }
     }
 }
