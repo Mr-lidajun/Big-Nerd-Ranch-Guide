@@ -325,6 +325,15 @@ public class CrimeFragment extends Fragment {
         });
 
         mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        mPhotoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mPhotoFile != null && mPhotoFile.exists()) {
+                    FragmentManager fragmentManager = getFragmentManager();
+                    SuspectImageFragment.newInstance(mPhotoFile).show(fragmentManager, DIALOG_SUSPECT);
+                }
+            }
+        });
         updatePhotoView();
 
         return v;
