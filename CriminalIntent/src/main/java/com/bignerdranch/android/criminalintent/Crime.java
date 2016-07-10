@@ -92,4 +92,8 @@ public class Crime {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.CHINA);
         return sdf.format(mDate);
     }
+
+    public String getPhotoFileName() {
+        return "IMG_" + getId().toString() + ".jpg";
+    }
 }

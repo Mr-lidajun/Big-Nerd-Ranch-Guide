@@ -1,13 +1,17 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.os.Environment;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import com.bignerdranch.android.criminalintent.CrimeDbSchema.CrimeTable;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import com.bignerdranch.android.criminalintent.CrimeDbSchema.CrimeTable;
 
 /**
  * @author lidajun
@@ -84,6 +88,24 @@ public class CrimeLab {
         } finally {
             cursor.close();
         }
+    }
+
+    /**
+     * 定位图片文件
+     * getExternalFilesDir(String):
+     *  获取主外部存储上存放常规文件的文件目录。通过String参数，可访问特定内容类型的子目录。内容类型常量以DIRECTORY_为前缀，
+     *  定义在Environment中。例如，用于图像文件的Environment.DIRECTORY_PICTURES
+     * @param crime
+     * @return
+     */
+    public File getPhotoFile(Crime crime) {
+        File externalFilesDir = mContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        if (externalFilesDir == null) {
+            return null;
+        }
+
+        return new File(externalFilesDir, crime.getPhotoFileName());
+
     }
 
     public void updateCrime(Crime crime) {
