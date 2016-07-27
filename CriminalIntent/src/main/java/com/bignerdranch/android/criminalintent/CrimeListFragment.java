@@ -37,6 +37,14 @@ public class CrimeListFragment extends Fragment {
     private CrimeAdapter mAdapter;
     // 记录子标题状态
     private boolean mSubtitleVisible;
+    private Callbacks mCallbacks;
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks {
+        void onCrimeSelected(Crime crime);
+    }
 
     /**
      * 第10章 挑战练习：实现高效的RecyclerView刷新
@@ -68,6 +76,12 @@ public class CrimeListFragment extends Fragment {
         CrimeListFragment fragment = new CrimeListFragment();
         fragment.setArguments(args);// 附加argument给fragment
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        mCallbacks = (Callbacks) activity;
     }
 
     @Override
@@ -127,6 +141,12 @@ public class CrimeListFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mCallbacks = null;
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.fragment_crime_list, menu);
@@ -159,8 +179,8 @@ public class CrimeListFragment extends Fragment {
     private void addCrime() {
         Crime crime = new Crime();
         CrimeLab.get(getActivity()).addCrime(crime);
-        Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId(), mSubtitleVisible);
-        startActivity(intent);
+        updateUI();
+        mCallbacks.onCrimeSelected(crime);
     }
 
     /**
@@ -181,7 +201,11 @@ public class CrimeListFragment extends Fragment {
         activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
-    private void updateUI() {
+    public void setDeleteCrime(boolean deleteCrime) {
+        mIsDeleteCrime = deleteCrime;
+    }
+
+    public void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
@@ -242,8 +266,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onClick(View v) {
             mLastAdapterClickPosition = getAdapterPosition();
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId(), mSubtitleVisible);
-            startActivityForResult(intent, REQUEST_CRIME);
+            mCallbacks.onCrimeSelected(mCrime);
         }
     }
 

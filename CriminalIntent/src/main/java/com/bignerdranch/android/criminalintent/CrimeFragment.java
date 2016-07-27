@@ -1,11 +1,5 @@
 package com.bignerdranch.android.criminalintent;
 
-import android.os.Build;
-import android.view.ViewTreeObserver;
-import java.io.File;
-import java.util.Date;
-import java.util.UUID;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +7,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -30,12 +25,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import java.io.File;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author lidajun
@@ -91,6 +92,15 @@ public class CrimeFragment extends Fragment {
     private ImageButton mPhotoButton;
     private ImageView mPhotoView;
     private File mPhotoFile;
+    private Callbacks mCallbacks;
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks {
+        void onCrimeUpdated(Crime crime);
+        void onCrimeDeleted(Crime crime);
+    }
 
     /**
      * 托管activity需要fragment实例时，转而调用newsInstance()方法，而非直接调用其构造方法。
@@ -125,6 +135,12 @@ public class CrimeFragment extends Fragment {
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        mCallbacks = (Callbacks) activity;
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
@@ -138,6 +154,12 @@ public class CrimeFragment extends Fragment {
     public void onPause() {
         super.onPause();
         CrimeLab.get(getActivity()).updateCrime(mCrime);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mCallbacks = null;
     }
 
     @Nullable
@@ -156,6 +178,7 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mCrime.setTitle(s.toString());
+                updateCrime();
             }
 
             @Override
@@ -230,6 +253,7 @@ public class CrimeFragment extends Fragment {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // Set the crime's solved property
                 mCrime.setSolved(isChecked);
+                updateCrime();
             }
         });
 
@@ -370,7 +394,21 @@ public class CrimeFragment extends Fragment {
         switch (item.getItemId()) {
             case R.id.menu_item_delete_crime:
                 CrimeLab.get(getActivity()).deleteCrime(mCrime);
-                setResult();
+                if (getActivity().findViewById(R.id.detail_fragment_container) == null) {
+                    setResult();
+                } else {
+                    List<Crime> crimes = CrimeLab.get(getActivity()).getCrimes();
+                    if (!crimes.isEmpty()) {
+                        mCallbacks.onCrimeDeleted(crimes.get(0));
+                    } else {
+                        // If no crimes hide the fragment crime
+                        FrameLayout detailLayout = (FrameLayout) getActivity().findViewById(R.id.detail_fragment_container);
+                        if (detailLayout != null) {
+                            detailLayout.setVisibility(View.GONE);
+                        }
+                    }
+                    updateCrime();
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -387,6 +425,7 @@ public class CrimeFragment extends Fragment {
         if (requestCode == REQUEST_DATE) {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
+            updateCrime();
             updateDate();
             updateTime();
         } else if (requestCode == REQUEST_CONTACT && data != null) {// 获取联系人姓名（内容提供者）
@@ -415,6 +454,7 @@ public class CrimeFragment extends Fragment {
                 long contactId = c.getLong(1);
                 mCrime.setSuspect(suspect);
                 mCrime.setContactId(contactId);
+                updateCrime();
                 mSuspectButton.setText(suspect);
 
                 //enables the button and changes its text
@@ -423,8 +463,14 @@ public class CrimeFragment extends Fragment {
                 c.close();
             }
         } else if (requestCode == REQUEST_PHOTO) {
+            updateCrime();
             updatePhotoView();
         }
+    }
+
+    private void updateCrime() {
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
     }
 
     private void updateDate() {
