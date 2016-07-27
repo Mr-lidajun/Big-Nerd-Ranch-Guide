@@ -1,1 +1,1 @@
-include ':GeoQuiz', ':CriminalIntent'
+include ':GeoQuiz', ':CriminalIntent', ':BeatBox'
