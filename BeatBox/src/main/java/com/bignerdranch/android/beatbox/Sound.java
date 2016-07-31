@@ -10,6 +10,11 @@ public class Sound {
     private String mAssetPath;
     private String mName;
 
+    /**
+     * mSoundId用了Integer类型而不是int。这样，在Sound的mSoundId没有值时可以设置其为null值
+     */
+    private Integer mSoundId;
+
     public Sound(String assetPath) {
         mAssetPath = assetPath;
         String[] components = assetPath.split("/");
@@ -23,5 +28,13 @@ public class Sound {
 
     public String getName() {
         return mName;
+    }
+
+    public Integer getSoundId() {
+        return mSoundId;
+    }
+
+    public void setSoundId(Integer soundId) {
+        mSoundId = soundId;
     }
 }
