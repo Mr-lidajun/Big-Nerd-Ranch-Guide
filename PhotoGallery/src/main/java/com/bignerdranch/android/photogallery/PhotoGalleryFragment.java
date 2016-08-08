@@ -1,17 +1,19 @@
 package com.bignerdranch.android.photogallery;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author lidajun
@@ -23,6 +25,12 @@ public class PhotoGalleryFragment extends Fragment {
     private static final String TAG = "PhotoGalleryFragment";
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private GridLayoutManager mLayoutManager;
+
+    private int spanCount = 3;
+    private int lastFetchedPage = 1;
+    private boolean loading = true;
+    int pastVisibleItems, visibleItemCount, totalItemCount;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -32,7 +40,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);// 保留fragment，思考为什么要保留fragment？答案会在23.7节揭晓
-        new FetchItemsTask().execute();
+        new FetchItemsTask().execute(lastFetchedPage);
     }
 
     @Nullable
@@ -41,8 +49,29 @@ public class PhotoGalleryFragment extends Fragment {
             @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.fragment_photo_gallery_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
-
+        mLayoutManager = new GridLayoutManager(getActivity(), spanCount);
+        mPhotoRecyclerView.setLayoutManager(mLayoutManager);
+        /**
+         * 参考：Solution Challenge 2: paging
+         * https://forums.bignerdranch.com/t/solution-challenge-2-paging/7839
+         */
+        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0) { //check for scroll down
+                    visibleItemCount = mLayoutManager.getChildCount();
+                    totalItemCount = mLayoutManager.getItemCount();
+                    pastVisibleItems = mLayoutManager.findFirstVisibleItemPosition();
+                    if (loading) {
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
+                            loading = false;
+                            Log.d(TAG, "Last Item Wow !");
+                            new FetchItemsTask().execute(lastFetchedPage);
+                        }
+                    }
+                }
+            }
+        });
         setupAdapter();
         return v;
     }
@@ -92,17 +121,24 @@ public class PhotoGalleryFragment extends Fragment {
         }
     }
     
-    private class FetchItemsTask extends AsyncTask<Void, Void, List<GalleryItem>> {
+    private class FetchItemsTask extends AsyncTask<Integer, Void, List<GalleryItem>> {
 
         @Override
-        protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickFetchr().fetchItems();
+        protected List<GalleryItem> doInBackground(Integer... params) {
+            return new FlickFetchr().fetchItems(params[0]);
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
-            setupAdapter();
+            if (lastFetchedPage > 1) {
+                mItems.addAll(items);
+                mPhotoRecyclerView.getAdapter().notifyDataSetChanged();
+            } else {
+                mItems = items;
+                setupAdapter();
+            }
+            lastFetchedPage++;
+            loading = true;
         }
     }
 }

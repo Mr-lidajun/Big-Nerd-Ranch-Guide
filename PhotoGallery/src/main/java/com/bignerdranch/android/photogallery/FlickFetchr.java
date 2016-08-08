@@ -12,6 +12,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 import android.net.Uri;
 import android.util.Log;
 
@@ -24,10 +27,13 @@ import android.util.Log;
 public class FlickFetchr {
     private static final String TAG = "FlickFetchr";
     private static final String API_KEY = "b50e0964aecf982fd03a6999f6b8b9da";
+    private static final int TIME_OUT = 15000;
 
     public byte[] getUrlBytes(String urlSpec) throws IOException {
         URL url = new URL(urlSpec);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setConnectTimeout(TIME_OUT);
+        connection.setReadTimeout(TIME_OUT);
 
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -53,7 +59,7 @@ public class FlickFetchr {
         return new String(getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchItems() {
+    public List<GalleryItem> fetchItems(int page) {
 
         List<GalleryItem> items = new ArrayList<>();
 
@@ -65,13 +71,15 @@ public class FlickFetchr {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    //.appendQueryParameter("per_page", "3")
+                    .appendQueryParameter("page", Integer.toString(page))
                     .build().toString();
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: " + jsonString);
-            JSONObject jsonBody = new JSONObject(jsonString);
-            parseItems(items, jsonBody);
-        } catch (JSONException je) {
-            Log.e(TAG, "Failed to parse JSON", je);
+            //JSONObject jsonBody = new JSONObject(jsonString);
+            parseItems(items, jsonString);
+        } catch (JsonSyntaxException jye) {
+            Log.e(TAG, "Failed to parse JSON", jye);
         } catch (IOException ioe) {
             Log.e(TAG, "Failed to fetch items", ioe);
         }
@@ -94,6 +102,18 @@ public class FlickFetchr {
             }
 
             item.setUrl(photoJsonObject.getString("url_s"));
+            items.add(item);
+        }
+    }
+
+    private void parseItems(List<GalleryItem> items, String jsonString) throws JsonSyntaxException {
+        GalleryItemForGson galleryItem = new Gson().fromJson(jsonString, GalleryItemForGson.class);
+        List<GalleryItemForGson.PhotosBean.PhotoBean> photos = galleryItem.photos.photo;
+        for (GalleryItemForGson.PhotosBean.PhotoBean photo : photos) {
+            GalleryItem item = new GalleryItem();
+            item.setId(photo.id);
+            item.setCaption(photo.title);
+            item.setUrl(photo.url_s);
             items.add(item);
         }
     }
