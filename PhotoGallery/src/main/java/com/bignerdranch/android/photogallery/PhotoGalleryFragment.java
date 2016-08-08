@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery;
 
+import android.view.ViewTreeObserver;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class PhotoGalleryFragment extends Fragment {
     private GridLayoutManager mLayoutManager;
 
     private int spanCount = 3;
+    private static final int COL_WIDTH = 300;
     private int lastFetchedPage = 1;
     private boolean loading = true;
     int pastVisibleItems, visibleItemCount, totalItemCount;
@@ -51,6 +53,15 @@ public class PhotoGalleryFragment extends Fragment {
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.fragment_photo_gallery_recycler_view);
         mLayoutManager = new GridLayoutManager(getActivity(), spanCount);
         mPhotoRecyclerView.setLayoutManager(mLayoutManager);
+        mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int numColumns = mPhotoRecyclerView.getWidth() / COL_WIDTH;
+                GridLayoutManager layoutManager = (GridLayoutManager)mPhotoRecyclerView.getLayoutManager();
+                layoutManager.setSpanCount(numColumns);
+            }
+        });
+
         /**
          * 参考：Solution Challenge 2: paging
          * https://forums.bignerdranch.com/t/solution-challenge-2-paging/7839
