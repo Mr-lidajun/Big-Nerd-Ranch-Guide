@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -59,8 +60,10 @@ public class PhotoGalleryFragment extends Fragment {
                 new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
             @Override
             public void onThumbnailDownloaded(PhotoHolder photoHolder, Bitmap bitmap) {
-                BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
-                photoHolder.bindDrawable(drawable);
+                if (bitmap != null) {
+                    BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+                    photoHolder.bindDrawable(drawable);
+                }
             }
         });
         mThumbnailDownloader.start();
@@ -103,6 +106,34 @@ public class PhotoGalleryFragment extends Fragment {
                             new FetchItemsTask().execute(lastFetchedPage);
                         }
                     }
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_DRAGGING:
+                        mThumbnailDownloader.clearPreloadQueue();
+                        break;
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                        GridLayoutManager gridLayoutManager =
+                                (GridLayoutManager) mPhotoRecyclerView.getLayoutManager();
+                        PhotoAdapter photoAdapter = (PhotoAdapter) mPhotoRecyclerView.getAdapter();
+                        int startingPos = gridLayoutManager.findLastVisibleItemPosition() + 1;
+                        int upperLimit = Math.min(startingPos + 10, photoAdapter.getItemCount());
+                        for (int i = startingPos; i < upperLimit; i++) {
+                            mThumbnailDownloader.preloadThumbnail(
+                                    photoAdapter.getGalleryItem(i).getUrl());
+                        }
+
+                        startingPos = gridLayoutManager.findFirstVisibleItemPosition() - 1;
+                        int lowerLimit = Math.max(startingPos - 10, 0);
+                        for (int i = startingPos; i > lowerLimit; i--) {
+                            mThumbnailDownloader.preloadThumbnail(
+                                    photoAdapter.getGalleryItem(i).getUrl());
+                        }
+
+                        break;
                 }
             }
         });
@@ -163,17 +194,32 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         public void onBindViewHolder(PhotoHolder holder, int position) {
             GalleryItem galleryItem = mGalleryItems.get(position);
-            Drawable drawable = getResources().getDrawable(R.drawable.bill_up_close);
-            holder.bindDrawable(drawable);
-            mThumbnailDownloader.queueThumbnail(holder, galleryItem.getUrl());
+            loadBitmap(galleryItem.getUrl(), holder);
         }
 
         @Override
         public int getItemCount() {
             return mGalleryItems.size();
         }
+
+        public GalleryItem getGalleryItem(int position) {
+            return mGalleryItems.get(position);
+        }
     }
-    
+
+    private void loadBitmap(String url, PhotoHolder holder) {
+        final Bitmap bitmap = mThumbnailDownloader.getBitmapFromMemCache(url);
+        if (bitmap != null) {
+            Log.i(TAG, "Loaded image from cache");
+            BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+            holder.bindDrawable(drawable);
+        } else {
+            Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.bill_up_close, null);
+            holder.bindDrawable(drawable);
+            mThumbnailDownloader.queueThumbnail(holder, url);
+        }
+    }
+
     private class FetchItemsTask extends AsyncTask<Integer, Void, List<GalleryItem>> {
 
         @Override
